@@ -1,0 +1,16 @@
+{
+  "name": "react-native-podfix",
+  "description": "Fixes some pod frameworks in react-native projects",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "bin": {
+    "react-native-podfix": "index.js"
+  },
+  "scripts": {
+    "postinstall": "node ."
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18"
+  }
+}
