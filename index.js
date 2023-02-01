@@ -7,8 +7,38 @@
   const fs = require("fs");
   const path = require("path");
 
+  // ran via yarn react-native-podfix <args[]>
+  // get args
+  const args = process.argv.slice(2);
+  if (args.length > 0) {
+    log(`Adding frameworks to pod-fix.rb: ${args.join(", ")}`);
+    // add the args to pod-fix.rb after the "# static_frameworks start" line
+    const podFixPath = path.resolve(
+      // where this script is
+      __dirname,
+      "pod-fix.rb"
+    );
+
+    // read the pod-fix.rb
+    const podFixFile = fs.readFileSync(podFixPath, "utf8").toString();
+
+    // find the line
+    const line = podFixFile.indexOf("  # static_frameworks start");
+
+    // add the args after that line, prepended with two spaces
+    const newPodFixFile =
+      podFixFile.slice(0, line) +
+      args.map((arg) => `  ${arg}`).join("\n") +
+      podFixFile.slice(line);
+
+    // write the pod-fix.rb
+    fs.writeFileSync(podFixPath, newPodFixFile, "utf8");
+
+    return;
+  }
+
   // find the podfile
-  const podfilePath = path.resolve(__dirname, "..", "ios", "Podfile");
+  const podfilePath = path.resolve(process.cwd(), "ios", "Podfile");
 
   function bold(text) {
     return `\x1b[1m${text}\x1b[0m`;

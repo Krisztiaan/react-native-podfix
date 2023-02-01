@@ -10,6 +10,10 @@ $default_static_frameworks = %w[
   AFNetworking
 ]
 
+$extra_static_frameworks = %w[
+  # static_frameworks start
+]
+
 def pod_fix(pre_install, user_static_frameworks = [], ignore_known_linkages = false)
   pre_install do |installer|
     $static_frameworks = $default_static_frameworks
