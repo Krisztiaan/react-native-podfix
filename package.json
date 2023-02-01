@@ -4,6 +4,21 @@
   "version": "1.1.0",
   "main": "index.js",
   "license": "MIT",
+  "keywords": [
+    "react-native",
+    "pod",
+    "podfile",
+    "cocoapods",
+    "static_framework",
+    "static framework",
+    "ios",
+    "framework",
+    "fix"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Krisztiaan/react-native-podfix.git"
+  },
   "bin": {
     "react-native-podfix": "index.js"
   },
