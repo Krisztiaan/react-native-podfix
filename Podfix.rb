@@ -2,7 +2,8 @@ require 'cocoapods'
 
 # do not remove the marker, it's used by the script to add pods
 static_frameworks = %w[
-  # static_frameworks_below
+  # pods_start
+  # pods_end
 ]
 
 

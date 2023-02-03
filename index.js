@@ -91,13 +91,11 @@ function addNewPods(newPods) {
     log("No new pods to add");
     return;
   }
-
-  const line = podFixFile.indexOf("  # static_frameworks_below");
-
-  const newPodFixFile =
-    podFixFile.slice(0, line) +
-    podsToAdd.map((arg) => `  ${arg}`).join("\n") +
-    podFixFile.slice(line);
+  const newPodFixFile = podFixFile.replace(
+    /(  # pods_start\s*)(.*?)(  # pods_end\s*)/s,
+    (match, p1, p2, p3) =>
+      `${p1}${p2}${podsToAdd.map((pod) => `  ${pod}`).join("\n")}\n${p3}`
+  );
 
   fs.writeFileSync(podfixPath, newPodFixFile, "utf8");
 
