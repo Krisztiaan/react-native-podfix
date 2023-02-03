@@ -1,98 +1,100 @@
+#!/usr/bin/env node
 //@ts-check
 /**
  * @fileoverview This is a postinstall script that adds a ruby script to the React Native project's podfile,
  * to fix certain pod linkages, without needing to use `use_frameworks!` in the podfile.
  */
-(() => {
-  const fs = require("fs");
-  const path = require("path");
+const fs = require("fs");
+const path = require("path");
 
-  // ran via yarn react-native-podfix <args[]>
-  // get args
-  const args = process.argv.slice(2);
-  if (args.length > 0) {
-    log(`Adding frameworks to pod-fix.rb: ${args.join(", ")}`);
-    // add the args to pod-fix.rb after the "# static_frameworks start" line
-    const podFixPath = path.resolve(
-      // where this script is
-      __dirname,
-      "pod-fix.rb"
+const bold = (text) => `\x1b[1m${text}\x1b[0m`;
+const log = (text) => console.log(`[react-native-podfix] ${text}`);
+const warn = (text) => console.warn(`[react-native-podfix] ${text}`);
+const error = (text) => {
+  console.error(`[react-native-podfix] ${text}`);
+  process.exit(1);
+};
+
+const firstNodeModulesPath = __dirname.indexOf("node_modules");
+if (firstNodeModulesPath === -1)
+  error("No `node_modules` found, skipping postinstall script");
+
+const projectRootPath = __dirname.slice(0, firstNodeModulesPath);
+const podfilePath = path.resolve(projectRootPath, "ios", "Podfile");
+const podfixPath = path.resolve(projectRootPath, "ios", "Podfix.rb");
+
+function copyPodfixIfNeeded() {
+  if (fs.existsSync(podfixPath)) {
+    log("Podfix.rb already exists, skipping");
+    return;
+  }
+  if (!fs.existsSync(path.resolve(__dirname, "Podfix.rb"))) {
+    error(
+      `Podfix.rb not found in package, running from:\n  ${bold(__dirname)}`
     );
-
-    // read the pod-fix.rb
-    const podFixFile = fs.readFileSync(podFixPath, "utf8").toString();
-
-    // find the line
-    const line = podFixFile.indexOf("  # static_frameworks start");
-
-    // add the args after that line, prepended with two spaces
-    const newPodFixFile =
-      podFixFile.slice(0, line) +
-      args.map((arg) => `  ${arg}`).join("\n") +
-      podFixFile.slice(line);
-
-    // write the pod-fix.rb
-    fs.writeFileSync(podFixPath, newPodFixFile, "utf8");
-
-    return;
   }
+  log("Copying Podfix.rb to ios folder");
+  fs.copyFileSync(path.resolve(__dirname, "Podfix.rb"), podfixPath);
+  log("Copied Podfix.rb to ios folder");
+}
 
-  // find the podfile
-  const podfilePath = path.resolve(process.cwd(), "ios", "Podfile");
+copyPodfixIfNeeded();
 
-  function bold(text) {
-    return `\x1b[1m${text}\x1b[0m`;
-  }
-
-  function log(text) {
-    console.log(`[react-native-podfix] ${text}`);
-  }
-
-  function warn(text) {
-    console.warn(`[react-native-podfix] ${text}`);
-  }
-
-  // does it exist?
+function installPodfixIfNeeded() {
   if (!fs.existsSync(podfilePath)) {
-    warn(`No Podfile found, skipping ${bold("pod-fix")} postinstall script`);
-    return;
+    error(
+      `Podfile not found in ios folder, running from:\n  ${bold(__dirname)}`
+    );
   }
-
-  // read the podfile
   const podfile = fs.readFileSync(podfilePath, "utf8").toString();
   let newPodfile = podfile;
-  // does it already have the fix's import?
-  if (
-    !podfile.includes(
-      "require_relative '../node_modules/react-native-podfix/pod-fix'"
-    )
-  ) {
-    log("Adding require for pod-fix into Podfile...");
-
-    // no, add it as last require_relative with a comment after, saying it's added by react-native-podfix
+  if (!podfile.includes("require_relative './Podfix'")) {
+    log("Installing Podfix.rb to Podfile");
     newPodfile = newPodfile.replace(
       /require_relative\s+['"](.+)['"]/g,
       (match, p1) =>
-        `${match}\nrequire_relative '../node_modules/react-native-podfix/pod-fix' # added by react-native-podfix`
+        `${match}\nrequire_relative './Podfix' # added by react-native-podfix`
     );
   }
 
-  // does it already have the fix called?
   if (!podfile.includes("pod_fix(pre_install")) {
     log("Adding call to pod_fix into Podfile...");
-
-    // add it before `post_install` or the last `end`
     newPodfile = newPodfile.replace(
-      /post_install\s+do\s+|end\s*$/,
-      (match) => `pod_fix(pre_install)\n${match}`
+      /( *?)post_install\s+do\s+|end\s*$/,
+      (match, p1) => `${p1}pod_fix(pre_install)\n${match}`
     );
   }
 
-  if (newPodfile !== podfile) {
-    log("Writing to Podfile...");
-    // write the podfile
-    fs.writeFileSync(podfilePath, newPodfile, "utf8");
+  fs.writeFileSync(podfilePath, newPodfile, "utf8");
+
+  log("Installed Podfix.rb to Podfile");
+}
+
+installPodfixIfNeeded();
+
+function addNewPods(newPods) {
+  log(`Adding pods to Podfix.rb:\n  - ${bold(newPods.join("\n  - "))}`);
+  const podFixFile = fs.readFileSync(podfixPath, "utf8").toString();
+  const podsToAdd = newPods.filter((arg) => !podFixFile.includes(arg));
+
+  if (podsToAdd.length === 0) {
+    log("No new pods to add");
+    return;
   }
 
-  log("Installed!");
-})();
+  const line = podFixFile.indexOf("  # static_frameworks_below");
+
+  const newPodFixFile =
+    podFixFile.slice(0, line) +
+    podsToAdd.map((arg) => `  ${arg}`).join("\n") +
+    podFixFile.slice(line);
+
+  fs.writeFileSync(podfixPath, newPodFixFile, "utf8");
+
+  log(`Added new pods to Podfix.rb:\n  - ${bold(podsToAdd.join("\n  - "))}`);
+}
+
+const newPods = process.argv.slice(2);
+if (newPods.length > 0) {
+  addNewPods(newPods);
+}

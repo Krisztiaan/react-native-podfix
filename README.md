@@ -31,36 +31,10 @@ yarn react-native-podfix
 ```
 
 If you have other pods that need to be set as `static_framework`s,
-you can add them as the `pod_fix` call's second, optional argument.
+you can add them to the `Podfix.rb` created by this script,
+next to your `Podfile`.
 
-```ruby
-$static_frameworks = %w[
-  SomeFramework
-  SomeOtherPod
-]
-
-pod_fix(pre_install, static_frameworks)
-```
-
-There is a list of frameworks we fix by default:
-
-```ruby
-$default_static_frameworks = %w[
-  PubNubSwift
-  IDnowSDK
-  Masonry
-  SocketRocket
-  libPhoneNumber-iOS
-  FLAnimatedImage
-  AFNetworking
-]
-```
-
-If you need to ignore this list for some reason, you can pass `false` as the third argument.
-
-```ruby
-pod_fix(pre_install, static_frameworks, false)
-```
+## Library authors
 
 If you want your native library to have it's pods fixed,
 add this package as a dependency, and add a postinstall to it,
@@ -73,3 +47,6 @@ like so:
   }
 }
 ```
+
+This will add your pods to the `Podfix.rb` created by this script,
+next to the app project's `Podfile`.
