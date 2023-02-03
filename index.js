@@ -8,10 +8,12 @@ const fs = require("fs");
 const path = require("path");
 
 const bold = (text) => `\x1b[1m${text}\x1b[0m`;
-const log = (text) => console.log(`[react-native-podfix] ${text}`);
-const warn = (text) => console.warn(`[react-native-podfix] ${text}`);
+const log = (text) =>
+  console.log(`\x1b[34m[react-native-podfix]\x1b[0m ${text}`);
+const warn = (text) =>
+  console.warn(`\x1b[33m[react-native-podfix]\x1b[0m ${text}`);
 const error = (text) => {
-  console.error(`[react-native-podfix] ${text}`);
+  console.error(`\x1b[31m[react-native-podfix]\x1b[0m ${text}`);
   process.exit(1);
 };
 
