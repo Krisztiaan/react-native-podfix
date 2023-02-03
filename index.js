@@ -59,11 +59,11 @@ function installPodfixIfNeeded() {
     if (lastRequireRelative !== -1) {
       newPodfile =
         newPodfile.slice(0, lastRequireRelative) +
-        `require_relative './Podfix' # added by react-native-podfix\n` +
+        `require_relative './Podfix' # react-native-podfix\n` +
         newPodfile.slice(lastRequireRelative);
     } else {
       // otherwise, add it at the top
-      newPodfile = `require_relative './Podfix' # added by react-native-podfix\n${newPodfile}`;
+      newPodfile = `require_relative './Podfix' # react-native-podfix\n${newPodfile}`;
     }
   }
 
@@ -71,7 +71,7 @@ function installPodfixIfNeeded() {
     log("Adding call to pod_fix into Podfile...");
     newPodfile = newPodfile.replace(
       /( *?)post_install\s+do\s+|end\s*$/,
-      (match, p1) => `${p1}pod_fix(pre_install)\n${match}`
+      (match, p1) => `${p1}pod_fix(pre_install) # react-native-podfix\n${match}`
     );
   }
 
