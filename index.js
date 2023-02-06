@@ -83,7 +83,9 @@ function installPodfixIfNeeded() {
 installPodfixIfNeeded();
 
 function addNewPods(newPods) {
-  log(`Adding pods to Podfix.rb:\n  - ${bold(newPods.join("\n  - "))}`);
+  log(
+    `Adding pods to ${bold("Podfix.rb")}:\n  - ${bold(newPods.join("\n  - "))}`
+  );
   const podFixFile = fs.readFileSync(podfixPath, "utf8").toString();
   const podsToAdd = newPods.filter((arg) => !podFixFile.includes(arg));
 
@@ -91,10 +93,11 @@ function addNewPods(newPods) {
     log("No new pods to add");
     return;
   }
+
+  // replace the %w[...] with the new pods. there can be anything in between the %w[...] so we need to use a regex
   const newPodFixFile = podFixFile.replace(
-    /(  # pods_start\s*)(.*?)(  # pods_end\s*)/s,
-    (match, p1, p2, p3) =>
-      `${p1}${p2}${podsToAdd.map((pod) => `  ${pod}`).join("\n")}\n${p3}`
+    /%w\[((?:\s*.*?)*?)\s*\]/,
+    (match, p1) => `%w[${p1}\n  ${podsToAdd.join("  ")}]`
   );
 
   fs.writeFileSync(podfixPath, newPodFixFile, "utf8");
