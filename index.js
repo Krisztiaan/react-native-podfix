@@ -6,6 +6,7 @@
  */
 const fs = require("fs");
 const path = require("path");
+const packageVersion = require("./package.json").version;
 
 const bold = (text) => `\x1b[1m${text}\x1b[0m`;
 const log = (text) =>
@@ -27,16 +28,34 @@ const podfixPath = path.resolve(projectRootPath, "ios", "Podfix.rb");
 
 function copyPodfixIfNeeded() {
   if (fs.existsSync(podfixPath)) {
-    log("Podfix.rb already exists, skipping");
-    return;
+    log("Podfix.rb already exists, checking if it's up to date");
+    // check for "## v<version>" comment
+    const currentPodfix = fs.readFileSync(podfixPath, "utf8").toString();
+    const currentVersion = currentPodfix.match(/## v(\d+\.\d+\.\d+)/);
+    if (currentVersion) {
+      const currentVersionNumber = currentVersion[1];
+      if (currentVersionNumber === packageVersion) {
+        log("Podfix.rb is up to date, skipping");
+        return;
+      }
+      if (currentVersionNumber > packageVersion)
+        error(
+          `Podfix.rb is newer than the package version, exiting. Current version: ${currentVersionNumber}, package version: ${packageVersion}`
+        );
+    }
   }
   if (!fs.existsSync(path.resolve(__dirname, "Podfix.rb"))) {
     error(
       `Podfix.rb not found in package, running from:\n  ${bold(__dirname)}`
     );
   }
+
   log("Copying Podfix.rb to ios folder");
-  fs.copyFileSync(path.resolve(__dirname, "Podfix.rb"), podfixPath);
+  const packagePodfixContent = fs
+    .readFileSync(path.resolve(__dirname, "Podfix.rb"), "utf8")
+    .toString();
+  const newPodfix = `## v${packageVersion}\n${packagePodfixContent}`;
+  fs.writeFileSync(podfixPath, newPodfix, "utf8");
   log("Copied Podfix.rb to ios folder");
 }
 
@@ -67,7 +86,7 @@ function installPodfixIfNeeded() {
     }
   }
 
-  if (!podfile.includes("pod_fix(pre_install")) {
+  if (!podfile.includes("pod_fix(pre_install)")) {
     log("Adding call to pod_fix into Podfile...");
     newPodfile = newPodfile.replace(
       /( *?)post_install\s+do\s+|end\s*$/,

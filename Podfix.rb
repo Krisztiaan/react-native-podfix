@@ -7,7 +7,7 @@ def pod_fix(pre_install)
   # Add your static frameworks below, separated by line break or space
   static_frameworks = %w[
   ]
-  puts "[react-native-podfix] Overriding the build_type to static_framework for the following pods: #{$static_frameworks.join(', ')}"
+  puts "[react-native-podfix] Overriding the build_type to static_framework for the following pods: #{static_frameworks.join(', ')}"
   pre_install do |installer|
     Pod::Installer::Xcode::TargetValidator.send(:define_method, :verify_no_static_framework_transitive_dependencies) {}
     installer.pod_targets.each do |pod|
